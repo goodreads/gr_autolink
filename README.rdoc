@@ -23,7 +23,7 @@ parent gem we forked from:
 
 By default gr_autolink returns retains html-safeness of input strings.
 
-This is original gem's behavior and this gem does NOT include this behavio:
+This is original gem's behavior and this gem does NOT include this behavior:
 
 * This behaviour can be overriden setting the <tt>:sanitize</tt> option to false 
 (thus making it insecure if you don't have the content under control).

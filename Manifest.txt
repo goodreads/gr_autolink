@@ -4,6 +4,7 @@ Gemfile
 Manifest.txt
 README.rdoc
 Rakefile
-lib/rails_autolink.rb
-lib/rails_autolink/helpers.rb
-test/test_rails_autolink.rb
+lib/gr_autolink.rb
+lib/gr_autolink/helpers.rb
+test/test_gr_autolink.rb
+TODO.txt

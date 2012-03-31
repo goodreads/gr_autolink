@@ -5,4 +5,3 @@ gem 'arel'
 gem 'rack'
 gem 'hoe'
 gem 'minitest'
-

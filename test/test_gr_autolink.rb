@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "rails"
-require "rails_autolink/helpers"
+require "gr_autolink/helpers"
 require 'erb'
 require 'cgi'
 require 'active_support/core_ext/class/attribute_accessors'
@@ -17,7 +17,7 @@ require 'action_dispatch/testing/assertions'
 require 'action_view/helpers/text_helper'
 require 'action_view/helpers/output_safety_helper'
 
-class TestRailsAutolink < MiniTest::Unit::TestCase
+class TestGrAutolink < MiniTest::Unit::TestCase
   include ActionView::Helpers::CaptureHelper
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::SanitizeHelper
@@ -77,7 +77,7 @@ class TestRailsAutolink < MiniTest::Unit::TestCase
       if link =~ /\.(jpg|gif|png|bmp|tif)$/i
         raw %(<img src="#{link}" width="160px">)
       else
-        link
+        escape_once(link)
       end
     }
   end
@@ -85,7 +85,7 @@ class TestRailsAutolink < MiniTest::Unit::TestCase
   def test_auto_link_should_sanitize_input_when_sanitize_option_is_not_false
     link_raw     = %{http://www.rubyonrails.com?id=1&num=2}
     malicious_script  = '<script>alert("malicious!")</script>'
-    assert_equal %{<a href="http://www.rubyonrails.com?id=1&num=2">http://www.rubyonrails.com?id=1&num=2</a>}, auto_link("#{link_raw}#{malicious_script}")
+    assert_equal %{<a href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a>}, auto_link("#{link_raw}#{malicious_script}")
     assert auto_link("#{link_raw}#{malicious_script}").html_safe?
   end
   
@@ -94,7 +94,7 @@ class TestRailsAutolink < MiniTest::Unit::TestCase
     malicious_script  = '<script>alert("malicious!")</script>'
     text_with_attributes = %{<a href="http://ruby-lang-org" target="_blank" data-malicious="inject">Ruby</a>}
     
-    text_result = %{<a class="big" href="http://www.rubyonrails.com?id=1&num=2">http://www.rubyonrails.com?id=1&num=2</a><a href="http://ruby-lang-org" target="_blank">Ruby</a>}
+    text_result = %{<a class="big" href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a><a href="http://ruby-lang-org" target="_blank">Ruby</a>}
     assert_equal text_result, auto_link("#{link_raw}#{malicious_script}#{text_with_attributes}",
                                         :sanitize_options => {:attributes => ["target", "href"]},
                                         :html => {:class => 'big'})
@@ -104,11 +104,16 @@ class TestRailsAutolink < MiniTest::Unit::TestCase
                      :html => {:class => 'big'}).html_safe?
   end
 
+  def test_auto_link_should_escape_ampersand_in_url
+    link_raw     = %{http://www.rubyonrails.com?id=1&num=2}
+    assert_equal %{<a href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a>}, auto_link(link_raw)
+  end
+
   def test_auto_link_should_not_sanitize_input_when_sanitize_option_is_false
     link_raw     = %{http://www.rubyonrails.com?id=1&num=2}
     malicious_script  = '<script>alert("malicious!")</script>'
     
-    assert_equal %{<a href="http://www.rubyonrails.com?id=1&num=2">http://www.rubyonrails.com?id=1&num=2</a><script>alert("malicious!")</script>}, auto_link("#{link_raw}#{malicious_script}", :sanitize => false)
+    assert_equal %{<a href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a><script>alert("malicious!")</script>}, auto_link("#{link_raw}#{malicious_script}", :sanitize => false)
     assert !auto_link("#{link_raw}#{malicious_script}", :sanitize => false).html_safe?
   end
 
@@ -306,9 +311,9 @@ class TestRailsAutolink < MiniTest::Unit::TestCase
   end
 
   private
-  def generate_result(link_text, href = nil, escape = false)
+  def generate_result(link_text, href = nil)
     href ||= link_text
-    if escape
+    if !link_text.html_safe?
       %{<a href="#{CGI::escapeHTML href}">#{CGI::escapeHTML link_text}</a>}
     else
       %{<a href="#{href}">#{link_text}</a>}

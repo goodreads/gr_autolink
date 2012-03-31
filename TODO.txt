@@ -1,0 +1,7 @@
+* fix the README to use new gem name and change any examples that behave
+  differently from original gem
+* handle parens better so that we don't take too many in cases like
+  (you should take a look at http://www.goodreads.com), in which the
+  closing paren is going to be picked up
+** probably just keep existing regex and then truncate any closing
+   punctuation from the href and just tack it on after the </a>

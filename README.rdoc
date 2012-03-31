@@ -1,17 +1,31 @@
-= rails_autolink
+= gr_autolink
 
-* http://github.com/tenderlove/rails_autolink
+* http://github.com/goodreads/gr_autolink
 
 == DESCRIPTION:
 
-This is an extraction of the `auto_link` method from rails.  The `auto_link`
+This is an adaptation of the extraction of the `auto_link` method from rails
+that is the rails_autolink gem.  The `auto_link`
 method was removed from Rails in version Rails 3.1.  This gem is meant to
-bridge the gap for people migrating.
+bridge the gap for people migrating...and behaves a little differently from the
+parent gem we forked from:
+
+* performs html-escaping of characters such as '&' in strings that are getting
+  linkified if the incoming string is not html_safe?
+* retains html-safety of incoming string (if input string is unsafe, will return
+  unsafe and vice versa)
+* fixes at least one bug:
+  (<img src="http://some.u.rl"> => <img src="<a href="http://some.u.rl">http://some.u.rl</a>">)
+  though can't imagine this is intended behavior, also have trouble believing that
+  this was an open bug in rails...
 
 == FEATURES:
 
-By default auto_link returns sanitized html_safe strings. 
-This behaviour can be overriden setting the <tt>:sanitize</tt> option to false 
+By default gr_autolink returns retains html-safeness of input strings.
+
+This is original gem's behavior and this gem does NOT include this behavio:
+
+* This behaviour can be overriden setting the <tt>:sanitize</tt> option to false 
 (thus making it insecure if you don't have the content under control).
 
 == SYNOPSIS:
@@ -47,13 +61,13 @@ This behaviour can be overriden setting the <tt>:sanitize</tt> option to false
 
 == INSTALL:
 
-* gem install rails_autolink
+* gem install gr_autolink
 
 == LICENSE:
 
 (The MIT License)
 
-Copyright (c) 2011 DHH
+Copyright (c) 2012 Goodreads, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

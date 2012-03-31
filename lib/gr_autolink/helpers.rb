@@ -1,4 +1,4 @@
-module RailsAutolink
+module GrAutolink
   require 'active_support/core_ext/object/blank'
   require 'active_support/core_ext/array/extract_options'
   require 'active_support/core_ext/hash/reverse_merge'
@@ -70,7 +70,7 @@ module RailsAutolink
 
           AUTO_LINK_RE = %r{
               (?: ([0-9A-Za-z+.:-]+:)// | www\. )
-              [^\s<]+
+              [^\s<>]+
             }x
 
           # regexps for determining context, used high-volume
@@ -101,13 +101,23 @@ module RailsAutolink
                   end
                 end
 
-                link_text = block_given?? yield(href) : href
+                link_text = if block_given?
+                              yield(href)
+                            else
+                              text.html_safe? ? href : escape_once(href)
+                            end
+
                 href = 'http://' + href unless scheme
 
                 unless options[:sanitize] == false
                   link_text = sanitize(link_text)
                   href      = sanitize(href)
                 end
+
+                unless text.html_safe?
+                  href = escape_once(href)
+                end
+
                 content_tag(:a, link_text, link_attributes.merge('href' => href), !!options[:sanitize]) + punctuation.reverse.join('')
               end
             end

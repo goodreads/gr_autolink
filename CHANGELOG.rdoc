@@ -1,3 +1,9 @@
+=== 1.0.7 / 2012-03-30
+
+* forking off into gr_autolink as it will behave differently from parent
+* fixing the bug that makes autolink fail on strings that contain img tags...used to create anchor links in the middle of the img src attributes... :(
+* adding html_safe awareness and escaping of ampersand if incoming string is not html safe
+
 === 1.0.6 / 2012-03-12
 
 * Added sanitize_options arg

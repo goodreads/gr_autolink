@@ -1,3 +1,11 @@
+=== 1.0.9 / 2012-03-30
+
+* adding patterns to match...now anything that's alphanum + period + 2 or more alphanum + / other stuff will match as a url. this will get some false positives "...yes/no", but at least the regex is still simple and will catch a lot of cases the old version did not.
+
+=== 1.0.8 / 2012-03-30
+
+* handling escaping of href and link text
+
 === 1.0.7 / 2012-03-30
 
 * forking off into gr_autolink as it will behave differently from parent

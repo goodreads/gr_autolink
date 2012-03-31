@@ -50,6 +50,8 @@ module GrAutolink
         def auto_link(text, *args, &block)#link = :all, html = {}, &block)
           return ''.html_safe if text.blank?
 
+          input_html_safe = text.html_safe?
+
           options = args.size == 2 ? {} : args.extract_options! # this is necessary because the old auto_link API has a Hash as its last parameter
           unless args.empty?
             options[:link] = args[0] || :all
@@ -59,11 +61,20 @@ module GrAutolink
           sanitize = (options[:sanitize] != false)
           sanitize_options = options[:sanitize_options] || {}
           text = conditional_sanitize(text, sanitize, sanitize_options).to_str
-          case options[:link].to_sym
-            when :all             then conditional_html_safe(auto_link_email_addresses(auto_link_urls(text, options[:html], options, &block), options[:html], &block), sanitize)
-            when :email_addresses then conditional_html_safe(auto_link_email_addresses(text, options[:html], &block), sanitize)
-            when :urls            then conditional_html_safe(auto_link_urls(text, options[:html], options, &block), sanitize)
-          end
+
+          autolinked_text =
+            case options[:link].to_sym
+            when :all
+              conditional_html_safe(auto_link_email_addresses(auto_link_urls(text, options[:html], options, &block), options[:html], &block), sanitize)
+            when :email_addresses
+              conditional_html_safe(auto_link_email_addresses(text, options[:html], &block), sanitize)
+            when :urls
+              conditional_html_safe(auto_link_urls(text, options[:html], options, &block), sanitize)
+            end
+
+          # regardless of sanitizing, make sure output is safe if input was safe
+          autolinked_text = input_html_safe ? autolinked_text.html_safe : autolinked_text
+          autolinked_text
         end
 
         private
@@ -153,8 +164,8 @@ module GrAutolink
             condition ? sanitize(target, sanitize_options) : target
           end
 
-          def conditional_html_safe(target, condition)
-            condition ? target.html_safe : target
+          def conditional_html_safe(target, mark_as_html_safe)
+            mark_as_html_safe ? target.html_safe : target
           end
       end
     end

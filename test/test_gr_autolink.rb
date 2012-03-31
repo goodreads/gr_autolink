@@ -310,6 +310,22 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     end
   end
 
+  def test_auto_link_retains_html_safeness_on_strings_with_no_url_sanitize_false
+    assert auto_link("abc123".html_safe, :sanitize => false).html_safe?
+  end
+
+  def test_auto_link_retains_non_html_safeness_on_strings_with_no_url_sanitize_false
+    assert !auto_link("abc123", :sanitize => false).html_safe?, "converted non-html-safe string to html safe!"
+  end
+
+  def test_auto_link_retains_html_safeness_on_strings_with_urls_to_autolink_sanitize_false
+    assert auto_link("my link is http://123.abc.org".html_safe, :sanitize => false).html_safe?
+  end
+
+  def test_auto_link_retains_non_html_safeness_on_strings_with_urls_to_autolink_sanitize_false
+    assert !auto_link("my link is http://123.abc.org", :sanitize => false).html_safe?
+  end
+
   private
   def generate_result(link_text, href = nil)
     href ||= link_text

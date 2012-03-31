@@ -80,7 +80,7 @@ module GrAutolink
         private
 
           AUTO_LINK_RE = %r{
-              (?: ([0-9A-Za-z+.:-]+:)// | www\. )
+              (?: ([0-9A-Za-z+.:-]+:)// | www\. | [a-zA-Z0-9.]+\.[a-zA-Z0-9]{2,}\/)
               [^\s<>]+
             }x
 

@@ -149,7 +149,6 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     assert_equal linked_email, auto_link(linked_email)
   end
 
-
   def test_auto_link_at_eol
     url1 = "http://api.rubyonrails.com/Foo.html"
     url2 = "http://www.ruby-doc.org/core/Bar.html"
@@ -157,7 +156,7 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     assert_equal %(<p><a href="#{url1}">#{url1}</a><br /><a href="#{url2}">#{url2}</a><br /></p>), auto_link("<p>#{url1}<br />#{url2}<br /></p>")
   end
 
-  def test_auto_link_should_be_html_safe
+  def test_auto_link_should_be_html_safe_with_sanitize
     email_raw         = 'santiago@wyeworks.com'
     link_raw          = 'http://www.rubyonrails.org'
     malicious_script  = '<script>alert("malicious!")</script>'
@@ -303,6 +302,7 @@ class TestGrAutolink < MiniTest::Unit::TestCase
       http://connect.oraclecorp.com/search?search[q]=green+france&search[type]=Group
       http://of.openfoundry.org/projects/492/download#4th.Release.3
       http://maps.google.co.uk/maps?f=q&q=the+london+eye&ie=UTF8&ll=51.503373,-0.11939&spn=0.007052,0.012767&z=16&iwloc=A
+      bit.ly/asdf
     )
 
     urls.each do |url|
@@ -329,6 +329,9 @@ class TestGrAutolink < MiniTest::Unit::TestCase
   private
   def generate_result(link_text, href = nil)
     href ||= link_text
+    if href !~ /:\/\//
+      href = "http://#{href}"
+    end
     if !link_text.html_safe?
       %{<a href="#{CGI::escapeHTML href}">#{CGI::escapeHTML link_text}</a>}
     else

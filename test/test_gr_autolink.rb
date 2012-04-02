@@ -310,6 +310,11 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     end
   end
 
+  def test_dont_autolink_periods_and_then_alphanum_with_slash
+    text = "i dunno...yes/no"
+    assert_equal text, auto_link(text)
+  end
+
   def test_auto_link_retains_html_safeness_on_strings_with_no_url_sanitize_false
     assert auto_link("abc123".html_safe, :sanitize => false).html_safe?
   end

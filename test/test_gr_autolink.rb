@@ -330,6 +330,15 @@ class TestGrAutolink < MiniTest::Unit::TestCase
   def test_auto_link_retains_non_html_safeness_on_strings_with_urls_to_autolink_sanitize_false
     assert !auto_link("my link is http://123.abc.org", :sanitize => false).html_safe?
   end
+  
+  def test_auto_link_truncation_option
+    link_text = "http://www.a1234567890.com"
+    input = "my link needs truncation #{link_text} and so forth"
+    expected_truncation = "my link needs truncation <a href=\"#{link_text}\">http://www.a...</a> and so forth"
+    expected_without_truncation = "my link needs truncation <a href=\"#{link_text}\">#{link_text}</a> and so forth"
+    assert auto_link(input, :max_link_length=>15) == expected_truncation
+    assert auto_link(input, :max_link_length=>link_text.size+1) == expected_without_truncation
+  end
 
   private
   def generate_result(link_text, href = nil)

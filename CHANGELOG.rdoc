@@ -1,3 +1,7 @@
+=== 1.0.11 / 2012-04-17
+
+* adding ability to truncate the URL as link text to specified length
+
 === 1.0.10 / 2012-04-02
 
 * bug fix: fix the ...yes/no bug mentioned below

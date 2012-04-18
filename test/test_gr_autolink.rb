@@ -1,5 +1,4 @@
-# encoding: utf-8
-
+# -*- coding: utf-8 -*-
 require "minitest/autorun"
 require "rails"
 require "gr_autolink/helpers"

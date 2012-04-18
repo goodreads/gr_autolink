@@ -15,6 +15,8 @@ module GrAutolink
         # text given is sanitized, you can override this behaviour setting the
         # <tt>:sanitize</tt> option to false, or you can add options to the sanitization of 
         # the text using the <tt>:sanitize_options</tt> option hash.
+        # An optional flag <tt>:max_link_length</tt> can be passed to let the function truncate
+        # the url text to the specified amount of characters
         #
         # ==== Examples
         #   auto_link("Go to http://www.rubyonrails.org and say hello to david@loudthinking.com")
@@ -35,6 +37,8 @@ module GrAutolink
         #   # => "Welcome to my new blog at <a href=\"http://www.myblog.com/\" target=\"_blank\">http://www.m...</a>.
         #         Please e-mail me at <a href=\"mailto:me@email.com\">me@email.com</a>."
         #
+        #   auto_link("Visit http://www.verylonglink.com/p/r/t/y/u/i/o/p/a.html", :max_link_length=>20)
+        #   # => "Visit <a href=\"http://www.verylonglink.com/p/r/t/y/u/i/o/p/a.html\">http://www.verylo...</a>"
         #
         # You can still use <tt>auto_link</tt> with the old API that accepts the
         # +link+ as its optional second parameter and the +html_options+ hash
@@ -127,6 +131,10 @@ module GrAutolink
 
                 unless text.html_safe?
                   href = escape_once(href)
+                end
+
+                if options[:max_link_length]
+                  link_text = truncate(link_text, :length=>options[:max_link_length])
                 end
 
                 content_tag(:a, link_text, link_attributes.merge('href' => href), !!options[:sanitize]) + punctuation.reverse.join('')

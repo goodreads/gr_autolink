@@ -13,6 +13,7 @@ Hoe.spec 'gr_autolink' do
   developer('Juanjo Bazan', 'jjbazan@gmail.com')
   developer('Akira Matsuda', 'ronnie@dio.jp')
   developer('Brian Percival', 'bpercival@goodreads.com')
+  developer('Jonathan Schatz', 'jon@divisionbyzero.com')
   self.readme_file   = 'README.rdoc'
   self.history_file  = 'CHANGELOG.rdoc'
   self.extra_rdoc_files  = FileList['*.rdoc']

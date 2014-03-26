@@ -16,7 +16,7 @@ require 'action_dispatch/testing/assertions'
 require 'action_view/helpers/text_helper'
 require 'action_view/helpers/output_safety_helper'
 
-class TestGrAutolink < MiniTest::Unit::TestCase
+class TestGrAutolink < MiniTest::Test
   include ActionView::Helpers::CaptureHelper
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::SanitizeHelper
@@ -24,6 +24,18 @@ class TestGrAutolink < MiniTest::Unit::TestCase
   include ActionView::Helpers::UrlHelper
   include ActionView::Helpers::OutputSafetyHelper
   include ActionDispatch::Assertions::DomAssertions
+
+  def assert_dom_equal(expected, actual, message = "")
+    expected_dom = HTML::Document.new(expected).root
+    actual_dom   = HTML::Document.new(actual).root
+    assert_equal expected_dom, actual_dom
+  end
+
+  def assert_dom_not_equal(expected, actual, message = "")
+    expected_dom = HTML::Document.new(expected).root
+    actual_dom   = HTML::Document.new(actual).root
+    refute_equal expected_dom, actual_dom
+  end
 
   def test_auto_link_within_tags
     link_raw    = 'http://www.rubyonrails.org/images/rails.png'
@@ -87,17 +99,17 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     assert_equal %{<a href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a>}, auto_link("#{link_raw}#{malicious_script}")
     assert auto_link("#{link_raw}#{malicious_script}").html_safe?
   end
-  
+
   def test_auto_link_should_sanitize_input_with_sanitize_options
     link_raw     = %{http://www.rubyonrails.com?id=1&num=2}
     malicious_script  = '<script>alert("malicious!")</script>'
     text_with_attributes = %{<a href="http://ruby-lang-org" target="_blank" data-malicious="inject">Ruby</a>}
-    
+
     text_result = %{<a class="big" href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a><a href="http://ruby-lang-org" target="_blank">Ruby</a>}
     assert_equal text_result, auto_link("#{link_raw}#{malicious_script}#{text_with_attributes}",
                                         :sanitize_options => {:attributes => ["target", "href"]},
                                         :html => {:class => 'big'})
-    
+
     assert auto_link("#{link_raw}#{malicious_script}#{text_with_attributes}",
                      :sanitize_options => {:attributes => ["target", "href"]},
                      :html => {:class => 'big'}).html_safe?
@@ -111,7 +123,7 @@ class TestGrAutolink < MiniTest::Unit::TestCase
   def test_auto_link_should_not_sanitize_input_when_sanitize_option_is_false
     link_raw     = %{http://www.rubyonrails.com?id=1&num=2}
     malicious_script  = '<script>alert("malicious!")</script>'
-    
+
     assert_equal %{<a href="http://www.rubyonrails.com?id=1&amp;num=2">http://www.rubyonrails.com?id=1&amp;num=2</a><script>alert("malicious!")</script>}, auto_link("#{link_raw}#{malicious_script}", :sanitize => false)
     assert !auto_link("#{link_raw}#{malicious_script}", :sanitize => false).html_safe?
   end
@@ -159,14 +171,14 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     email_raw         = 'santiago@wyeworks.com'
     link_raw          = 'http://www.rubyonrails.org'
     malicious_script  = '<script>alert("malicious!")</script>'
-    
+
     assert auto_link(nil).html_safe?, 'should be html safe'
     assert auto_link('').html_safe?, 'should be html safe'
     assert auto_link("#{link_raw} #{link_raw} #{link_raw}").html_safe?, 'should be html safe'
     assert auto_link("hello #{email_raw}").html_safe?, 'should be html safe'
     assert auto_link("hello #{email_raw} #{malicious_script}").html_safe?, 'should be html safe'
   end
-  
+
   def test_auto_link_should_not_be_html_safe_when_sanitize_option_false
     email_raw         = 'santiago@wyeworks.com'
     link_raw          = 'http://www.rubyonrails.org'
@@ -174,6 +186,14 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     assert !auto_link("hello", :sanitize => false).html_safe?, 'should not be html safe'
     assert !auto_link("#{link_raw} #{link_raw} #{link_raw}", :sanitize => false).html_safe?, 'should not be html safe'
     assert !auto_link("hello #{email_raw}", :sanitize => false).html_safe?, 'should not be html safe'
+  end
+
+  def test_auto_link_email_addres_with_especial_chars
+    email_raw    = "and&re$la*+r-a.o'rea=l~ly@tenderlovemaking.com"
+    email_sanitized = "and&amp;re$la*+r-a.o&#x27;rea=l~ly@tenderlovemaking.com"
+    email_result = %{<a href="mailto:#{email_raw}">#{email_sanitized}</a>}
+    assert_equal email_result, auto_link(email_raw)
+    assert !auto_link_email_addresses(email_result).html_safe?, 'should not be html safe'
   end
 
   def test_auto_link_email_address
@@ -207,6 +227,8 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     email2_raw    = '+david@loudthinking.com'
     email2_result = %{<a href="mailto:#{email2_raw}">#{email2_raw}</a>}
     assert_equal email2_result, auto_link(email2_raw)
+    assert_equal email2_result, auto_link(email2_raw, :all)
+    assert_equal email2_result, auto_link(email2_raw, :email_addresses)
 
     email3_raw    = '+david@loudthinking.com'
     email3_result = %{<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;+%64%61%76%69%64@%6c%6f%75%64%74%68%69%6e%6b%69%6e%67.%63%6f%6d">#{email3_raw}</a>}
@@ -278,6 +300,14 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     with_kcode 'u' do
       assert_equal %(浅草.rbの公式サイトはこちら#{link11_result}), auto_link("浅草.rbの公式サイトはこちら#{link11_raw}")
     end
+
+    link12_raw    = 'http://tools.ietf.org/html/rfc3986'
+    link12_result = generate_result(link12_raw)
+    assert_equal %(<p>#{link12_result} text-after-nonbreaking-space</p>), auto_link("<p>#{link12_raw} text-after-nonbreaking-space</p>")
+
+    link13_raw    = 'HTtP://www.rubyonrails.com'
+    assert_equal generate_result(link13_raw), auto_link(link13_raw)
+
   end
 
   def test_auto_link_parsing
@@ -301,6 +331,7 @@ class TestGrAutolink < MiniTest::Unit::TestCase
       http://connect.oraclecorp.com/search?search[q]=green+france&search[type]=Group
       http://of.openfoundry.org/projects/492/download#4th.Release.3
       http://maps.google.co.uk/maps?f=q&q=the+london+eye&ie=UTF8&ll=51.503373,-0.11939&spn=0.007052,0.012767&z=16&iwloc=A
+      http://около.кола/колокола
       bit.ly/asdf
     )
 
@@ -329,7 +360,7 @@ class TestGrAutolink < MiniTest::Unit::TestCase
   def test_auto_link_retains_non_html_safeness_on_strings_with_urls_to_autolink_sanitize_false
     assert !auto_link("my link is http://123.abc.org", :sanitize => false).html_safe?
   end
-  
+
   def test_auto_link_truncation_option
     link_text = "http://www.a1234567890.com"
     input = "my link needs truncation #{link_text} and so forth"
@@ -337,6 +368,19 @@ class TestGrAutolink < MiniTest::Unit::TestCase
     expected_without_truncation = "my link needs truncation <a href=\"#{link_text}\">#{link_text}</a> and so forth"
     assert auto_link(input, :max_link_length=>15) == expected_truncation
     assert auto_link(input, :max_link_length=>link_text.size+1) == expected_without_truncation
+  end
+
+  def test_auto_link_does_not_timeout_when_parsing_odd_email_input
+    inputs = %w(
+       foo@...................................
+       foo@........................................
+       foo@.............................................
+    ) << "A" * 100000
+    inputs.each do |input|
+      Timeout.timeout(0.2) do
+        assert_equal input, auto_link(input)
+      end
+    end
   end
 
   private

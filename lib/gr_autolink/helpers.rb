@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 module GrAutolink
   require 'active_support/core_ext/object/blank'
   require 'active_support/core_ext/array/extract_options'
@@ -13,7 +14,7 @@ module GrAutolink
         # <tt>:email_addresses</tt>, and <tt>:urls</tt>. If a block is given, each URL and
         # e-mail address is yielded and the result is used as the link text. By default the
         # text given is sanitized, you can override this behaviour setting the
-        # <tt>:sanitize</tt> option to false, or you can add options to the sanitization of 
+        # <tt>:sanitize</tt> option to false, or you can add options to the sanitization of
         # the text using the <tt>:sanitize_options</tt> option hash.
         # An optional flag <tt>:max_link_length</tt> can be passed to let the function truncate
         # the url text to the specified amount of characters
@@ -82,16 +83,22 @@ module GrAutolink
         end
 
         private
+          WORD_PATTERN = RUBY_VERSION < '1.9' ? '\w' : '\p{Word}'
+
+          PROTOCOLS = %w{ed2k ftp http https irc mailto news gopher nntp telnet
+                         webcal xmpp callto feed svn urn aim rsync tag ssh sftp
+                         rtsp afs file z39.50r chrome}.map{|p| Regexp.escape p}.join('|')
 
           AUTO_LINK_RE = %r{
-              (?: ([0-9A-Za-z+.:-]+:)// | www\. | [a-zA-Z0-9.]+[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}\/)
-              [^\s<>]+
-            }x
+              (?: ((?:view\-source\:)?(?:#{PROTOCOLS}):)// | www\. | [a-zA-Z0-9.]+[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}\/)
+              [^\s<\u00A0]+
+            }ix
 
           # regexps for determining context, used high-volume
           AUTO_LINK_CRE = [/<[^>]+$/, /^[^>]*>/, /<a\b.*?>/i, /<\/a>/i]
 
-          AUTO_EMAIL_RE = /[\w.!#\$%+-]+@[\w-]+(?:\.[\w-]+)+/
+          AUTO_EMAIL_LOCAL_RE = /[\w.!#\$%&'*\/=?^`{|}~+-]/
+          AUTO_EMAIL_RE = /[\w.!#\$%+-]\.?#{AUTO_EMAIL_LOCAL_RE}*@[\w-]+(?:\.[\w-]+)+/
 
           BRACKETS = { ']' => '[', ')' => '(', '}' => '{' }
 
@@ -108,7 +115,7 @@ module GrAutolink
                 href
               else
                 # don't include trailing punctuation character as part of the URL
-                while href.sub!(/[^\w\/-]$/, '')
+                while href.sub!(/[^#{WORD_PATTERN}\/-]$/, '')
                   punctuation.push $&
                   if opening = BRACKETS[punctuation.last] and href.scan(opening).size > href.scan(punctuation.last).size
                     href << punctuation.pop
@@ -119,7 +126,7 @@ module GrAutolink
                 link_text = if block_given?
                               yield(href)
                             else
-                              text.html_safe? ? href : escape_once(href)
+                              text.html_safe? ? href : escape(href)
                             end
 
                 href = 'http://' + href unless scheme
@@ -130,7 +137,7 @@ module GrAutolink
                 end
 
                 unless text.html_safe?
-                  href = escape_once(href)
+                  href = escape(href)
                 end
 
                 if options[:max_link_length]
@@ -140,6 +147,12 @@ module GrAutolink
                 content_tag(:a, link_text, link_attributes.merge('href' => href), !!options[:sanitize]) + punctuation.reverse.join('')
               end
             end
+          end
+
+          def escape(href)
+            # escape_once doesn't escape single-quotes but we need to since we're
+            # potentially putting content in an attribute tag
+            escape_once(href).gsub("'", '&#39;')
           end
 
           # Turns all email addresses into clickable links.  If a block is given,

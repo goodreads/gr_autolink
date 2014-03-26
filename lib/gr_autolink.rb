@@ -1,5 +1,5 @@
 module GrAutolink
-  VERSION = '1.0.11'
+  VERSION = '1.0.12'
 
   class Railtie < ::Rails::Railtie
     initializer 'gr_autolink' do |app|

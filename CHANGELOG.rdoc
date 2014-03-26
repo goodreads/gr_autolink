@@ -1,3 +1,8 @@
+=== 1.0.12  / 2014-03-26
+
+* merge changes in from rails_autolink
+* fix handling of single-quotes
+
 === 1.0.11 / 2012-04-17
 
 * adding ability to truncate the URL as link text to specified length

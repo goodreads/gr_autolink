@@ -1,23 +1,13 @@
-# -*- ruby -*-
+#!/usr/bin/env rake
+# -*- coding: utf-8 -*-
+require "bundler/gem_tasks"
 
-require 'rubygems'
-require 'hoe'
+require 'rake/testtask'
 
-Hoe.plugins.delete :rubyforge
-Hoe.plugin :minitest
-Hoe.plugin :gemspec # `gem install hoe-gemspec`
-Hoe.plugin :git     # `gem install hoe-git`
-
-Hoe.spec 'gr_autolink' do
-  developer('Aaron Patterson', 'aaron@tenderlovemaking.com')
-  developer('Juanjo Bazan', 'jjbazan@gmail.com')
-  developer('Akira Matsuda', 'ronnie@dio.jp')
-  developer('Brian Percival', 'bpercival@goodreads.com')
-  developer('Jonathan Schatz', 'jon@divisionbyzero.com')
-  self.readme_file   = 'README.rdoc'
-  self.history_file  = 'CHANGELOG.rdoc'
-  self.extra_rdoc_files  = FileList['*.rdoc']
-  self.extra_deps       << ['rails', '~> 3.1']
+Rake::TestTask.new do |t|
+  t.libs << 'lib/gr_autolink'
+  t.test_files = FileList['test/test*.rb']
+  t.verbose = true
 end
 
-# vim: syntax=ruby
+task :default => :test

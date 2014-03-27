@@ -1,7 +1,4 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
-gem 'rails', '~> 3.1'
-gem 'arel'
-gem 'rack'
-gem 'hoe'
-gem 'minitest'
+# Specify your gem's dependencies in gr_autolink.gemspec
+gemspec

@@ -91,7 +91,7 @@ module GrAutolink
 
           AUTO_LINK_RE = %r{
               (?: ((?:view\-source\:)?(?:#{PROTOCOLS}):)// | www\. | [a-zA-Z0-9.]+[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}\/)
-              [^\s<\u00A0]+
+              [^\s<>\u00A0]+
             }ix
 
           # regexps for determining context, used high-volume
@@ -109,7 +109,6 @@ module GrAutolink
             text.gsub(AUTO_LINK_RE) do
               scheme, href = $1, $&
               punctuation = []
-
               if auto_linked?($`, $')
                 # do not change string; URL is already linked
                 href
@@ -128,7 +127,6 @@ module GrAutolink
                             else
                               text.html_safe? ? href : escape(href)
                             end
-
                 href = 'http://' + href unless scheme
 
                 unless options[:sanitize] == false

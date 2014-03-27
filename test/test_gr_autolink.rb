@@ -43,6 +43,11 @@ class TestGrAutolink < MiniTest::Test
     assert_equal link_result, auto_link(link_result)
   end
 
+  def test_auto_link_with_img_src
+    text = 'hello <img src="http://www.google.com/"> kitty'
+    assert_equal text, auto_link(text)
+  end
+
   def test_auto_link_with_brackets
     link1_raw = 'http://en.wikipedia.org/wiki/Sprite_(computer_graphics)'
     link1_result = generate_result(link1_raw)

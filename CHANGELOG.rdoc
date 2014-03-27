@@ -1,3 +1,7 @@
+=== 1.0.13  / 2014-03-26
+
+* fix handling of img tags (again)
+
 === 1.0.12  / 2014-03-26
 
 * merge changes in from rails_autolink

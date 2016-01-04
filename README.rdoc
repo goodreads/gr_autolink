@@ -8,6 +8,19 @@ This is an extraction of the `auto_link` method from rails.  The `auto_link`
 method was removed from Rails in version Rails 3.1.  This gem is meant to
 bridge the gap for people migrating.
 
+== GR EXTENSIONS
+
+This implementation behaves a little differently from the parent gem:
+
+* performs html-escaping of characters such as '&' in strings that are getting
+  linkified if the incoming string is not html_safe?
+* retains html-safety of incoming string (if input string is unsafe, will return
+  unsafe and vice versa)
+* fixes at least one bug:
+  (<img src="http://some.u.rl"> => <img src="<a href="http://some.u.rl">http://some.u.rl</a>">)
+  though can't imagine this is intended behavior, also have trouble believing that
+  this was an open bug in rails...
+
 == FEATURES:
 
 By default auto_link returns sanitized html_safe strings.

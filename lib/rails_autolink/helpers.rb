@@ -1,5 +1,12 @@
 # encoding: utf-8
 
+# As a replacement for our custom gr_autolink gem (which is not compatible
+# with rails 4), just use standard rails_autolink gem with a
+# few monkeypatches.
+#
+# Our changes are delimited by "** GR" and "** /GR" and mainly concern
+# maintaining html_safe-ness and adding max_link_length.
+
 module RailsAutolink
   require 'active_support/core_ext/object/blank'
   require 'active_support/core_ext/array/extract_options'
@@ -52,28 +59,41 @@ module RailsAutolink
         def auto_link(text, *args, &block) #link = :all, html = {}, &block)
           return ''.html_safe if text.blank?
 
+          # ** GR
+          input_html_safe = text.html_safe?
+          # ** /GR
+
           options = args.size == 2 ? {} : args.extract_options! # this is necessary because the old auto_link API has a Hash as its last parameter
           unless args.empty?
             options[:link] = args[0] || :all
             options[:html] = args[1] || {}
           end
           options.reverse_merge!(:link => :all, :html => {})
-          sanitize = (options[:sanitize] != false)
+          sanitize = options[:sanitize]
           sanitize_options = options[:sanitize_options] || {}
           text = conditional_sanitize(text, sanitize, sanitize_options).to_str
-          case options[:link].to_sym
-            when :all             then conditional_html_safe(auto_link_email_addresses(auto_link_urls(text, options[:html], options, &block), options[:html], &block), sanitize)
-            when :email_addresses then conditional_html_safe(auto_link_email_addresses(text, options[:html], &block), sanitize)
-            when :urls            then conditional_html_safe(auto_link_urls(text, options[:html], options, &block), sanitize)
-          end
+
+          autolinked_text = case options[:link].to_sym
+                            when :all             then conditional_html_safe(auto_link_email_addresses(auto_link_urls(text, options[:html], options, &block), options[:html], &block), sanitize)
+                            when :email_addresses then conditional_html_safe(auto_link_email_addresses(text, options[:html], &block), sanitize)
+                            when :urls            then conditional_html_safe(auto_link_urls(text, options[:html], options, &block), sanitize)
+                            end
+
+          # ** GR
+          input_html_safe ? autolinked_text.html_safe : autolinked_text
+          # ** /GR
         end
 
         private
 
+          PROTOCOLS = %w{ed2k ftp http https irc mailto news gopher nntp telnet
+                         webcal xmpp callto feed svn urn aim rsync tag ssh sftp
+                         rtsp afs file z39.50r chrome}.map{|p| Regexp.escape p}.join('|')
+
           AUTO_LINK_RE = %r{
-              (?: ((?:ed2k|ftp|http|https|irc|mailto|news|gopher|nntp|telnet|webcal|xmpp|callto|feed|svn|urn|aim|rsync|tag|ssh|sftp|rtsp|afs|file):)// | www\. )
-              [^\s<\u00A0"]+
-            }ix
+             (?: ((?:view\-source\:)?(?:#{PROTOCOLS}):)// | www\. | [a-zA-Z0-9.]+[a-zA-Z0-9]\.[a-zA-Z0-9]{2,}\/)
+               [^\s<>\u00A0]+
+          }ix
 
           # regexps for determining context, used high-volume
           AUTO_LINK_CRE = [/<[^>]+$/, /^[^>]*>/, /<a\b.*?>/i, /<\/a>/i]
@@ -106,17 +126,42 @@ module RailsAutolink
                   end
                 end
 
-                link_text = block_given?? yield(href) : href
+                # ** GR
+                link_text = if block_given?
+                              yield(href)
+                            else
+                              text.html_safe? ? href : escape(href)
+                            end
+                # ** /GR
                 href = 'http://' + href unless scheme
 
                 unless options[:sanitize] == false
                   link_text = sanitize(link_text)
                   href      = sanitize(href)
                 end
+
+                # ** GR
+                unless text.html_safe?
+                  href = escape(href)
+                end
+                if options[:max_link_length]
+                  link_text = truncate(link_text, :length=>options[:max_link_length])
+                end
+                # ** /GR
+
                 content_tag(:a, link_text, link_attributes.merge('href' => href), !!options[:sanitize]) + punctuation.reverse.join('')
               end
             end
           end
+
+          # ** GR
+          def escape(href)
+            # escape_once doesn't escape single-quotes but we need to since we're
+            # potentially putting content in an attribute tag
+            escape_once(href).gsub("'", '&#39;')
+          end
+          # ** /GR
+
 
           # Turns all email addresses into clickable links.  If a block is given,
           # each email is yielded and the result is used as the link text.
